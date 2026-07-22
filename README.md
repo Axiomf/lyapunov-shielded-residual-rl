@@ -74,6 +74,7 @@ cartpole-residual-rl/
 ├── requirements-lock.txt         # Exact versions for final reproduction
 ├── pyproject.toml                # Package, pytest, and Ruff configuration
 ├── Makefile                      # Shortcuts for common commands
+├── LICENSE                      
 ├── .gitignore
 │
 ├── configs/                      # Version-controlled experiment settings
