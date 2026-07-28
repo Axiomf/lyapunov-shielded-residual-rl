@@ -30,7 +30,7 @@ class NominalController:
         state = np.asarray(state, dtype=np.float64).copy()
         state[2] = wrap_angle(float(state[2]))
         if abs(state[2]) <= self.config.switch_angle:
-            force = -float(self.gain @ state)
+            force = -(self.gain @ state).item()
         else:
             energy_error = self.plant.pole_energy(state) - (
                 self.plant.pole_mass
