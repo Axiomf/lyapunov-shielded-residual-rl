@@ -1,19 +1,26 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "lyapunov-shielded-residual-rl"
 version = "0.1.0"
+description = "Minimal cart-pole pole-mass mismatch and residual-SAC study"
 requires-python = ">=3.13,<3.14"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
 
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
