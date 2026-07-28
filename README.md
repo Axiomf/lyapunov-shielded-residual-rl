@@ -6,11 +6,11 @@ damaging its local closed-loop stability.
 
 The study compares:
 
-1. **Nominal control** â€” energy shaping for swing-up, followed by LQR near the
+1. **Nominal control** — energy shaping for swing-up, followed by LQR near the
    upright equilibrium.
-2. **Residual SAC** â€” the nominal controller plus a bounded action correction
+2. **Residual SAC** — the nominal controller plus a bounded action correction
    learned with Soft Actor-Critic (SAC).
-3. **Shielded residual SAC** â€” the same learned residual, filtered by a
+3. **Shielded residual SAC** — the same learned residual, filtered by a
    Lyapunov-based shield before the action reaches the plant.
 
 SAC is trained with randomized pole mass. All three controllers are then
@@ -70,7 +70,7 @@ cd lyapunov-shielded-residual-rl
 
 | Command | What it does |
 | --- | --- |
-| `git clone â€¦` | Downloads the repository and its Git history into a new `lyapunov-shielded-residual-rl` directory. |
+| `git clone …` | Downloads the repository and its Git history into a new `lyapunov-shielded-residual-rl` directory. |
 | `cd lyapunov-shielded-residual-rl` | Makes that directory the current working directory so later commands can find the project files. |
 
 ### 2. Create and activate a virtual environment
@@ -155,44 +155,44 @@ swing up and stabilize the nominal plant.
 
 ```text
 lyapunov-shielded-residual-rl/
-â”œâ”€â”€ README.md                     # Setup, workflow, and conventions
-â”œâ”€â”€ requirements.txt              # Direct runtime dependencies
-â”œâ”€â”€ requirements-dev.txt          # Runtime plus test/lint tools
-â”œâ”€â”€ requirements-lock.txt         # Frozen environment for final experiments
-â”œâ”€â”€ pyproject.toml                # Package, pytest, and Ruff configuration
-â”œâ”€â”€ Makefile                      # Shortcuts for common commands
-â”œâ”€â”€ LICENSE
-â”œâ”€â”€ .gitignore
-â”‚
-â”œâ”€â”€ configs/                      # Version-controlled experiment settings
-â”‚   â”œâ”€â”€ plant.yaml
-â”‚   â”œâ”€â”€ nominal_controller.yaml
-â”‚   â”œâ”€â”€ sac.yaml
-â”‚   â”œâ”€â”€ shield.yaml
-â”‚   â””â”€â”€ evaluation.yaml
-â”‚
-â”œâ”€â”€ src/
-â”‚   â””â”€â”€ cartpole_rl/              # Reusable application code
-â”‚       â”œâ”€â”€ __init__.py
-â”‚       â”œâ”€â”€ config.py
-â”‚       â”œâ”€â”€ types.py
-â”‚       â”œâ”€â”€ simulation/           # Dynamics, integration, and simulation
-â”‚       â”œâ”€â”€ controllers/          # Nominal, residual, and shielded control
-â”‚       â”œâ”€â”€ envs/                 # Gymnasium residual-learning environment
-â”‚       â”œâ”€â”€ training/             # SAC training and callbacks
-â”‚       â”œâ”€â”€ analysis/             # Fixed points, Jacobians, basins, metrics
-â”‚       â””â”€â”€ plotting/             # Publication-ready figures
-â”‚
-â”œâ”€â”€ scripts/                      # Thin command-line entry points
-â”‚   â”œâ”€â”€ smoke_test.py
-â”‚   â”œâ”€â”€ train.py
-â”‚   â”œâ”€â”€ evaluate.py
-â”‚   â””â”€â”€ make_figures.py
-â”‚
-â”œâ”€â”€ tests/                        # Unit and reproducibility tests
-â”œâ”€â”€ outputs/                      # Generated runs, models, metrics, figures
-â””â”€â”€ report/                       # LaTeX report source
-    â””â”€â”€ main.tex
+├── README.md                     # Setup, workflow, and conventions
+├── requirements.txt              # Direct runtime dependencies
+├── requirements-dev.txt          # Runtime plus test/lint tools
+├── requirements-lock.txt         # Frozen environment for final experiments
+├── pyproject.toml                # Package, pytest, and Ruff configuration
+├── Makefile                      # Shortcuts for common commands
+├── LICENSE
+├── .gitignore
+│
+├── configs/                      # Version-controlled experiment settings
+│   ├── plant.yaml
+│   ├── nominal_controller.yaml
+│   ├── sac.yaml
+│   ├── shield.yaml
+│   └── evaluation.yaml
+│
+├── src/
+│   └── cartpole_rl/              # Reusable application code
+│       ├── __init__.py
+│       ├── config.py
+│       ├── types.py
+│       ├── simulation/           # Dynamics, integration, and simulation
+│       ├── controllers/          # Nominal, residual, and shielded control
+│       ├── envs/                 # Gymnasium residual-learning environment
+│       ├── training/             # SAC training and callbacks
+│       ├── analysis/             # Fixed points, Jacobians, basins, metrics
+│       └── plotting/             # Publication-ready figures
+│
+├── scripts/                      # Thin command-line entry points
+│   ├── smoke_test.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── make_figures.py
+│
+├── tests/                        # Unit and reproducibility tests
+├── outputs/                      # Generated runs, models, metrics, figures
+└── report/                       # LaTeX report source
+    └── main.tex
 ```
 
 Reusable logic belongs under `src/cartpole_rl/`. Files in `scripts/` should
@@ -386,10 +386,10 @@ Generated artifacts stay under `outputs/`:
 
 ```text
 outputs/
-â”œâ”€â”€ models/       # Selected checkpoints
-â”œâ”€â”€ runs/         # Per-seed training logs and resolved configs
-â”œâ”€â”€ metrics/      # Evaluation CSV/NPZ files
-â””â”€â”€ figures/      # Final plots
+├── models/       # Selected checkpoints
+├── runs/         # Per-seed training logs and resolved configs
+├── metrics/      # Evaluation CSV/NPZ files
+└── figures/      # Final plots
 ```
 
 Commit source code, tests, YAML configurations, final metric tables, and report
@@ -459,20 +459,20 @@ result.
 
 ## Troubleshooting
 
-- **`ModuleNotFoundError: cartpole_rl`** â€” activate the virtual environment and
+- **`ModuleNotFoundError: cartpole_rl`** — activate the virtual environment and
   rerun `python -m pip install -e .` from the repository root.
-- **Wrong Python interpreter** â€” run `which python` on macOS/Linux or
+- **Wrong Python interpreter** — run `which python` on macOS/Linux or
   `Get-Command python` in PowerShell. The reported path should be inside the
   active `.venv` directory.
-- **PowerShell blocks activation** â€” review the current policy with
+- **PowerShell blocks activation** — review the current policy with
   `Get-ExecutionPolicy`. Follow your organization's security policy rather than
   weakening it globally.
-- **Training results differ** â€” compare the Git commit, lock file, resolved
+- **Training results differ** — compare the Git commit, lock file, resolved
   YAML configuration, seed, device, software versions, and deterministic
   evaluation setting.
-- **The nominal smoke test is unstable** â€” verify state order, angle convention,
+- **The nominal smoke test is unstable** — verify state order, angle convention,
   force clipping, integration step, control period, and switching logic before
   tuning gains.
-- **Large files appear in Git** â€” inspect `git status`, update `.gitignore` if
+- **Large files appear in Git** — inspect `git status`, update `.gitignore` if
   appropriate, and keep intermediate checkpoints and raw logs under ignored
   output paths.
