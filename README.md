@@ -32,7 +32,7 @@ from version control.
 
 ## Quick start
 
-Python 3.11 or newer is recommended.
+Python 3.13 or newer is recommended.
 
 ```bash
 python -m venv .venv
