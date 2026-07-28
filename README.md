@@ -44,7 +44,7 @@ controller.
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
-- CPython 3.13.14
+- CPython 3.13
 - `make` for the optional convenience targets
 
 The simulator, tests, and evaluation run on CPU. A CUDA-capable GPU is optional
@@ -64,7 +64,7 @@ cd lyapunov-shielded-residual-rl
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements.txt
 python -m pip install -e .
 python -m pip check
 python -m pytest
@@ -79,14 +79,6 @@ py -3.13 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-For an exact experiment environment, install the frozen dependencies in a clean
-virtual environment:
-
-```bash
-python -m pip install -r requirements-lock.txt
-python -m pip install --no-deps -e .
-```
-
 Do not start a full SAC run until the tests pass and the nominal smoke test can
 swing up and stabilize the nominal plant.
 
@@ -95,9 +87,7 @@ swing up and stabilize the nominal plant.
 ```text
 lyapunov-shielded-residual-rl/
 ├── README.md                     # Setup, workflow, and conventions
-├── requirements.txt              # Direct runtime dependencies
-├── requirements-dev.txt          # Runtime plus test/lint tools
-├── requirements-lock.txt         # Frozen environment for final experiments
+├── requirements.txt              # Runtime and development dependencies
 ├── pyproject.toml                # Package, pytest, and Ruff configuration
 ├── Makefile                      # Shortcuts for common commands
 ├── LICENSE
@@ -243,13 +233,6 @@ outputs/
 Commit source code, tests, YAML configurations, final metric tables, and report
 figures. Keep virtual environments, caches, TensorBoard event streams,
 temporary rollouts, and large intermediate checkpoints out of version control.
-
-## Reproducing reported results
-
-Use a clean clone, the frozen `requirements-lock.txt`, the recorded model
-checkpoints, and the fixed evaluation configuration. Record the operating
-system, Python version, Git commit, configuration files, seeds, device, and
-exact commands.
 
 The complete procedure is in
 [Reproducing final results](DEVELOPMENT_GUIDE.md#reproducing-final-results).

@@ -12,3 +12,7 @@ tqdm>=4.70.0,<4.71
 
 # Required only when Stable-Baselines3 uses progress_bar=True:
 # rich>=15.0.0,<16
+
+pytest>=9.1.1,<9.2
+pytest-cov>=7.1.0,<7.2
+ruff>=0.16.0,<0.17
