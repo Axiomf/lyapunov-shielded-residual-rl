@@ -1,10 +1,10 @@
 # Lyapunov-Shielded Residual RL for Cart-Pole Swing-Up
 
-This repository studies whether bounded residual reinforcement learning can make
-a nominal cart-pole controller more robust to pole-mass mismatch without
+This repository studies whether bounded residual reinforcement learning can
+make a nominal cart-pole controller more robust to pole-mass mismatch without
 damaging its local closed-loop stability.
 
-The study compares:
+The study compares three controllers built from the same components:
 
 1. **Nominal control** — energy shaping for swing-up, followed by LQR near the
    upright equilibrium.
@@ -14,8 +14,8 @@ The study compares:
    Lyapunov-based shield before the action reaches the plant.
 
 SAC is trained with randomized pole mass. All three controllers are then
-evaluated deterministically on the same frozen initial conditions and on a
-wider, fixed pole-mass range.
+evaluated deterministically on the same frozen initial conditions and a wider,
+fixed pole-mass range.
 
 > [!IMPORTANT]
 > The shield and stability analyses provide empirical evidence for this plant,
@@ -25,7 +25,7 @@ wider, fixed pole-mass range.
 
 ## What is measured
 
-Reward is not treated as a sufficient measure of controller quality. The
+Reward alone is not treated as a sufficient measure of controller quality. The
 evaluation also records:
 
 - swing-up and stabilization success rate;
@@ -37,46 +37,29 @@ evaluation also records:
 - empirical Lyapunov-decrease violations; and
 - shield activation and infeasibility rates.
 
-Results are reported across three fixed training seeds. Comparisons use the same
-mass grid, initial states, rollout horizon, and success criteria for every
-controller.
+Results are reported by controller, pole mass, and training seed. Every
+comparison uses the same mass grid, initial states, rollout horizon, and
+success criteria.
 
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
 - CPython 3.13
-- `make` for the optional convenience targets
+- [uv](https://docs.astral.sh/uv/)
 
 The simulator, tests, and evaluation run on CPU. A CUDA-capable GPU is optional
 and may reduce SAC training time.
 
-For environment details, dependency policy, Git practices, troubleshooting, and
-the full reproducibility procedure, see
-[DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md).
-
 ## Quick start
 
-Run all commands from the repository root.
+Run all commands from the repository root:
 
 ```bash
 git clone https://github.com/Axiomf/lyapunov-shielded-residual-rl.git
 cd lyapunov-shielded-residual-rl
-python3.13 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -e .
-python -m pip check
-python -m pytest
-python -m ruff check src tests scripts
-python scripts/smoke_test.py --controller nominal --mu 1.0
-```
-
-On Windows PowerShell, create and activate the environment with:
-
-```powershell
-py -3.13 -m venv .venv
-.venv\Scripts\Activate.ps1
+uv sync
+uv run pytest
+uv run cartpole smoke-test --config configs/experiment.yaml
 ```
 
 Do not start a full SAC run until the tests pass and the nominal smoke test can
@@ -86,116 +69,205 @@ swing up and stabilize the nominal plant.
 
 ```text
 lyapunov-shielded-residual-rl/
-├── README.md                     # Setup, workflow, and conventions
-├── requirements.txt              # Runtime and development dependencies
-├── pyproject.toml                # Package, pytest, and Ruff configuration
-├── Makefile                      # Shortcuts for common commands
-├── LICENSE
+├── README.md
+├── PROJECT_STRUCTURE.md
+├── pyproject.toml
+├── uv.lock
 ├── .gitignore
-│
-├── configs/                      # Version-controlled experiment settings
-│   ├── plant.yaml
-│   ├── nominal_controller.yaml
-│   ├── sac.yaml
-│   ├── shield.yaml
-│   └── evaluation.yaml
-│
+├── configs/
+│   └── experiment.yaml
 ├── src/
-│   └── cartpole_rl/              # Reusable application code
+│   └── cartpole_rl/
 │       ├── __init__.py
 │       ├── config.py
-│       ├── types.py
-│       ├── simulation/           # Dynamics, integration, and simulation
-│       ├── controllers/          # Nominal, residual, and shielded control
-│       ├── envs/                 # Gymnasium residual-learning environment
-│       ├── training/             # SAC training and callbacks
-│       ├── analysis/             # Fixed points, Jacobians, basins, metrics
-│       └── plotting/             # Publication-ready figures
-│
-├── scripts/                      # Thin command-line entry points
-│   ├── smoke_test.py
-│   ├── train.py
-│   ├── evaluate.py
-│   └── make_figures.py
-│
-├── tests/                        # Unit and reproducibility tests
-├── outputs/                      # Generated runs, models, metrics, figures
-└── report/                       # LaTeX report source
-    └── main.tex
+│       ├── plant.py
+│       ├── controllers.py
+│       ├── shield.py
+│       ├── environment.py
+│       ├── learning.py
+│       ├── evaluation.py
+│       ├── plotting.py
+│       └── cli.py
+├── tests/
+│   ├── test_plant.py
+│   ├── test_controllers.py
+│   ├── test_shield.py
+│   ├── test_learning.py
+│   └── test_pipeline.py
+├── paper/
+│   └── main.tex
+└── runs/                       # Generated and ignored by Git
 ```
 
-Reusable logic belongs under `src/cartpole_rl/`. Files in `scripts/` should
-only parse command-line arguments, load configuration, and call package
-functions.
+The project intentionally uses one configuration file, one command-line
+interface, and a small set of modules with clear ownership. See
+[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the detailed design rules and
+module contracts.
+
+## Architecture
+
+| Path | Responsibility |
+| --- | --- |
+| `configs/experiment.yaml` | Seeds, masses, controller and shield parameters, SAC settings, evaluation grids, horizons, and output options |
+| `config.py` | Load, validate, and freeze the experiment configuration |
+| `plant.py` | Cart-pole dynamics, integration, equilibria, physical limits, and mass mismatch |
+| `controllers.py` | Nominal control, bounded residual control, and construction of the three evaluated variants |
+| `shield.py` | Lyapunov filtering, activation and feasibility status, fallback behavior, and diagnostics |
+| `environment.py` | RL observations, reward, termination, action normalization, and training-time mass randomization |
+| `learning.py` | SAC construction, training, checkpoints, loading, and seed handling |
+| `evaluation.py` | Deterministic rollouts, stability analysis, basin sampling, and reported metrics |
+| `plotting.py` | Figures and summary tables generated only from saved evaluation data |
+| `cli.py` | The `train`, `evaluate`, `plot`, and `smoke-test` commands |
+
+The plant dynamics are defined once in `plant.py`; training and evaluation must
+use that implementation rather than maintaining separate simulators.
+
+## Controller composition
+
+The three evaluated controllers are compositions of the same nominal
+controller, learned residual policy, and shield:
+
+| Controller | Control law |
+| --- | --- |
+| Nominal | `clip(u_nominal(x))` |
+| Residual SAC | `clip(u_nominal(x) + bounded_residual(x))` |
+| Shielded residual SAC | `clip(u_nominal(x) + shield(x, bounded_residual(x)))` |
+
+Every controller exposes the same interface:
+
+```python
+action, diagnostics = controller.act(state, deterministic=True)
+```
+
+Applicable diagnostics include the nominal action, proposed and applied
+residuals, shield activation, shield infeasibility, and constraint margin. This
+keeps evaluation logging independent of the controller variant.
 
 ## Configuration and conventions
 
-Experiment values belong in `configs/*.yaml`, not in Python source files.
+All experiment choices belong in `configs/experiment.yaml`; experiment
+constants should not be scattered through Python modules. The configuration
+contains:
 
-| File | Contents |
-| --- | --- |
-| `plant.yaml` | Physical parameters, integration step, actuator limit, and track limit |
-| `nominal_controller.yaml` | Energy-shaping, LQR, and switching parameters |
-| `sac.yaml` | Residual bounds, training mass distribution, SAC settings, and training seeds |
-| `shield.yaml` | Lyapunov test, tolerance, action projection, and fallback settings |
-| `evaluation.yaml` | Frozen mass grid, initial states, horizons, success criteria, and model paths |
+```yaml
+seeds: [0, 1, 2]
 
-The project uses these conventions:
+plant:
+  nominal_pole_mass: ...
+
+controller:
+  action_limit: ...
+  residual_limit: ...
+  energy_shaping: ...
+  lqr: ...
+
+shield:
+  enabled: true
+  lyapunov_region: ...
+  decrease_margin: ...
+  infeasible_fallback: ...
+
+training:
+  algorithm: sac
+  total_steps: ...
+  mass_randomization: true
+  pole_mass_range: [...]
+
+evaluation:
+  deterministic_policy: true
+  pole_mass_grid: [...]
+  horizon: ...
+  initial_condition_grid: ...
+  success_definition: ...
+```
+
+The displayed keys are a contract, not a complete parameter list. The project
+also uses these conventions:
 
 - state order: `[x, theta, x_dot, theta_dot]`;
 - `theta = 0` is the upright pole configuration;
-- the control period is `0.02 s`;
+- the control period is configured explicitly;
 - commanded force is clipped to the configured actuator limit;
 - actual pole mass is `mu * nominal_pole_mass`;
-- training samples `mu` from the range configured in `sac.yaml`; and
+- training samples `mu` from the configured training range; and
 - evaluation uses frozen masses, initial states, seeds, horizons, and success
-  criteria from `evaluation.yaml`.
+  criteria.
 
-Each training run must save its fully resolved configuration, seed, model
-checkpoint, training log, and Git commit hash in its output directory.
+Every run validates the configuration and saves its fully resolved form beside
+the results.
 
-## Standard workflow
+## Reproducing the study
 
-### Quality checks and smoke test
-
-```bash
-make test
-make smoke
-```
-
-Without `make`:
+### 1. Run tests and the smoke test
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts
-python scripts/smoke_test.py --controller nominal --mu 1.0
+uv run pytest
+uv run cartpole smoke-test --config configs/experiment.yaml
 ```
 
-### Train the fixed seeds
+The test suite covers plant conventions and integration, controller
+composition and action bounds, shield behavior and fallback handling, seeded
+mass randomization, and a small end-to-end pipeline.
+
+### 2. Train SAC
 
 ```bash
-python scripts/train.py --config configs/sac.yaml --seed 11 --output outputs/runs/residual_seed_11
-python scripts/train.py --config configs/sac.yaml --seed 22 --output outputs/runs/residual_seed_22
-python scripts/train.py --config configs/sac.yaml --seed 33 --output outputs/runs/residual_seed_33
+uv run cartpole train --config configs/experiment.yaml
 ```
 
-Run the seeds separately so that a failed run does not overwrite or obscure the
-others. The unshielded and shielded comparisons should use the same learned
-policy; the shield is applied at control/evaluation time.
+Training randomizes pole mass over the configured range and freezes one
+checkpoint per seed. The residual and shielded comparisons use the same learned
+policy; the shield is applied at control and evaluation time.
 
-### Evaluate and plot
+### 3. Evaluate all controllers
 
 ```bash
-python scripts/evaluate.py --config configs/evaluation.yaml
-python scripts/make_figures.py
+uv run cartpole evaluate --config configs/experiment.yaml --run <run-name>
 ```
 
-Evaluation must use deterministic policy actions. Figure generation reads the
-saved metrics and does not rerun training.
+Evaluation uses deterministic policy actions and the frozen evaluation grid. It
+must not retrain a policy, silently change the grid, or sample a replacement
+grid.
 
-The `Makefile` also provides `install`, `test`, `smoke`, `train`, `evaluate`,
-and `figures` targets. Use `make -n <target>` to inspect the commands behind a
-target without executing them.
+### 4. Generate figures and tables
+
+```bash
+uv run cartpole plot --run <run-name>
+```
+
+Plotting reads saved evaluation tables. It does not train policies or run new
+simulations.
+
+## Generated runs
+
+Generated artifacts are stored under `runs/`, which is ignored by Git. Each run
+is self-describing:
+
+```text
+runs/<run-name>/
+├── resolved_config.yaml
+├── metadata.json
+├── checkpoints/
+│   ├── seed_0/
+│   ├── seed_1/
+│   └── seed_2/
+├── tables/
+│   ├── episodes.csv
+│   ├── local_stability.csv
+│   └── basin.csv
+└── figures/
+```
+
+- `metadata.json` records the timestamp, code revision, dependency versions,
+  and command used.
+- `episodes.csv` preserves one row per rollout and per-seed values before
+  aggregation.
+- `local_stability.csv` stores the numerical fixed point, displacement, and
+  Jacobian spectral radius for every controller, mass, and seed.
+- `basin.csv` stores each sampled initial condition and its outcome.
+
+Large step-by-step trajectories should be retained only when a figure or
+diagnostic requires them.
 
 ## Interpreting the stability results
 
@@ -204,35 +276,28 @@ target without executing them.
 - **Jacobian spectral radius** is computed for the discrete-time closed-loop
   map at the numerical fixed point. A value below one is evidence of local
   linear asymptotic stability for that map, subject to finite-difference,
-  model, and numerical error. It is not a global-stability result.
+  modeling, and numerical error. It is not a global-stability result.
 - **Empirical basin geometry** describes successful points on the sampled
   initial-condition grid. It is not a proof of the full region of attraction.
 - **Lyapunov-decrease violations** count failures of the configured empirical
   decrease test. Their meaning depends on the candidate function,
   discretization, and tolerance.
-- **Shield infeasibility** means no residual action considered by the shield
-  satisfies its configured condition; record and evaluate the configured
-  fallback separately.
+- **Shield infeasibility** means that no residual action considered by the
+  shield satisfies its configured condition. The configured fallback is
+  recorded and evaluated separately.
 
-Report results by controller, mass, and seed. Keep nominal constraints
-(configured limits), observed violations (evaluation data), and formal
-guarantees (none claimed here) clearly separated.
+Keep configured limits, observed violations, and formal guarantees distinct
+when reporting results. This study claims no global or unconditional safety
+guarantee.
 
-## Generated outputs
+## Development rules
 
-Generated artifacts stay under `outputs/`:
+- Keep reusable logic in `src/cartpole_rl/` and argument handling in `cli.py`.
+- Add experiment values to `configs/experiment.yaml`, not Python source files.
+- Save raw per-seed and per-rollout measurements before aggregation.
+- Keep required analysis out of notebooks.
+- Generate plots and report summaries from saved tables.
+- Split a module into a package only when it becomes difficult to navigate.
+- Describe the shield's implemented condition, assumptions, activations, and
+  failures precisely.
 
-```text
-outputs/
-├── models/       # Selected checkpoints
-├── runs/         # Per-seed training logs and resolved configs
-├── metrics/      # Evaluation CSV/NPZ files
-└── figures/      # Final plots
-```
-
-Commit source code, tests, YAML configurations, final metric tables, and report
-figures. Keep virtual environments, caches, TensorBoard event streams,
-temporary rollouts, and large intermediate checkpoints out of version control.
-
-The complete procedure is in
-[Reproducing final results](DEVELOPMENT_GUIDE.md#reproducing-final-results).
