@@ -44,16 +44,15 @@ controller.
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
-- CPython 3.11
+- CPython 3.13.14
 - `make` for the convenience targets in `Makefile` (optional)
 
 The simulator, tests, and evaluation run on CPU. A CUDA-capable GPU is optional
 and may reduce SAC training time.
 
-The dependency baseline was reviewed on 2026-07-28 for CPython 3.11. NumPy
-2.4.x and SciPy 1.17.x are intentionally selected because they are the newest
-release lines that support Python 3.11; their next release lines require Python
-3.12 or newer.
+The dependency baseline was reviewed on 2026-07-28 for CPython 3.13.14. NumPy
+2.4.x and SciPy 1.17.x are intentionally selected for the Python 3.13
+baseline.
 
 All commands below are run from the repository root unless stated otherwise.
 Using `python -m pip` and `python -m pytest` ensures that the commands use the
@@ -78,22 +77,22 @@ cd lyapunov-shielded-residual-rl
 On macOS or Linux:
 
 ```bash
-python3.11 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 ```
 
 On Windows PowerShell:
 
 ```powershell
-py -3.11 -m venv .venv
+py -3.13 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
 | Command | What it does |
 | --- | --- |
-| `python3.11 -m venv .venv` | Creates an isolated Python 3.11 environment in `.venv` on macOS or Linux. |
+| `python3.13 -m venv .venv` | Creates an isolated Python 3.13 environment in `.venv` on macOS or Linux. |
 | `source .venv/bin/activate` | Updates the current macOS/Linux shell to use the environment's Python and installed packages. |
-| `py -3.11 -m venv .venv` | Creates the same environment with the Windows Python launcher. |
+| `py -3.13 -m venv .venv` | Creates the same environment with the Windows Python launcher. |
 | `.venv\Scripts\Activate.ps1` | Activates the environment in Windows PowerShell. |
 
 Activation affects only the current terminal. Run the appropriate activation
@@ -216,13 +215,13 @@ experiments. The current ranges target these release lines:
 
 | Area | Release line | Reason |
 | --- | --- | --- |
-| Numerical core | NumPy 2.4.x and SciPy 1.17.x | Newest lines that retain CPython 3.11 support. |
+| Numerical core | NumPy 2.4.x and SciPy 1.17.x | Selected for compatibility with Python 3.13. |
 | RL stack | Gymnasium 1.3.x, Stable-Baselines3 2.9.x, and PyTorch 2.x | Stable-Baselines3 2.9 supports Gymnasium 1.3 and requires PyTorch 2.8 or newer; this project uses PyTorch 2.13 as its minimum baseline. |
 | Data and plots | pandas 3.x, Matplotlib 3.x, and seaborn 0.13.x | Current stable release lines for metrics and publication figures. |
 | Developer tools | pytest 9.x, pytest-cov 7.x, and Ruff 0.16 or newer | Current test, coverage, and lint lines; Ruff is capped below its future 1.0 release. |
 
 These ranges are not an experiment lock. After changing either requirements
-file, install into a clean CPython 3.11 environment, run the verification
+file, install into a clean CPython 3.13.14 environment, run the verification
 commands, and then refresh `requirements-lock.txt`. A pre-existing lock file
 does not update automatically.
 
@@ -430,7 +429,7 @@ simulation smoke test on the exact code proposed for review.
 Start from a clean clone and create a separate environment:
 
 ```bash
-python3.11 -m venv .venv-clean
+python3.13 -m venv .venv-clean
 source .venv-clean/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements-lock.txt
@@ -443,7 +442,7 @@ python scripts/make_figures.py
 
 | Command | What it does |
 | --- | --- |
-| `python3.11 -m venv .venv-clean` | Creates an environment that is separate from day-to-day development packages. |
+| `python3.13 -m venv .venv-clean` | Creates an environment that is separate from day-to-day development packages. |
 | `source .venv-clean/bin/activate` | Activates that clean environment on macOS or Linux. |
 | `python -m pip install --upgrade pip` | Updates only the clean environment's installer. |
 | `python -m pip install -r requirements-lock.txt` | Restores the frozen package versions. |
