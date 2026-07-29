@@ -25,6 +25,43 @@ class StarterSmokeTests(unittest.TestCase):
         np.testing.assert_allclose(derivative, np.zeros(4), atol=1e-12)
         np.testing.assert_allclose(next_state.as_array(), np.zeros(4), atol=1e-12)
 
+    def test_state_derivative_satisfies_coupled_dynamics(self) -> None:
+        plant = self.config.plant.with_mass_multiplier(1.3)
+        state = State(0.7, 0.43, -0.8, 1.2)
+        force = 2.3
+
+        derivative = state_derivative(state.as_array(), force, plant)
+        x_ddot = derivative[2]
+        theta_ddot = derivative[3]
+        sin_theta = math.sin(state.theta)
+        cos_theta = math.cos(state.theta)
+
+        # Check the two coupled equations before acceleration elimination. This
+        # independently guards the signs and mass terms in state_derivative.
+        cart_force = (
+            (plant.cart_mass + plant.pole_mass) * x_ddot
+            + plant.pole_mass * plant.pole_length * cos_theta * theta_ddot
+            - plant.pole_mass
+            * plant.pole_length
+            * sin_theta
+            * state.theta_dot**2
+        )
+        pole_acceleration = (
+            plant.pole_length * theta_ddot + cos_theta * x_ddot
+        )
+
+        np.testing.assert_allclose(
+            derivative[:2],
+            [state.x_dot, state.theta_dot],
+            atol=1e-12,
+        )
+        self.assertAlmostEqual(cart_force, force, places=12)
+        self.assertAlmostEqual(
+            pole_acceleration,
+            plant.gravity * sin_theta,
+            places=12,
+        )
+
     def test_actor_observation_has_one_shared_shape_and_range(self) -> None:
         observation = normalize_state(
             State(5.0, 7.0, -20.0, 50.0),
