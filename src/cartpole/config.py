@@ -192,17 +192,35 @@ class RolloutConfig:
 
 @dataclass(frozen=True)
 class TrainingConfig:
-    """Domain-randomization interval and independent random seeds.
+    """Domain randomization, SAC settings, seeds, and artifact location.
 
     One fixed ``mu`` is sampled per rollout from ``[mu_min, mu_max]``; it must
-    not drift within that rollout. The seeds support paired, reproducible
-    comparisons across the three controllers. Evaluation mass settings are
-    intentionally separate from this training interval.
+    not drift within that rollout. The small default SAC run is an interface
+    smoke test, not a converged research policy. Increase ``total_timesteps``
+    only after the training data path has been verified.
     """
 
     mu_min: float = 0.8
     mu_max: float = 1.2
     seeds: tuple[int, ...] = (0, 1, 2)
+
+    # Deliberately small defaults for the first end-to-end interface check.
+    total_timesteps: int = 64
+    learning_starts: int = 16
+    buffer_size: int = 10_000
+    batch_size: int = 16
+    hidden_sizes: tuple[int, ...] = (64, 64)
+
+    learning_rate: float = 3e-4
+    gamma: float = 0.99
+    tau: float = 0.005
+    train_frequency: int = 1
+    gradient_steps: int = 1
+    entropy_coefficient: str | float = "auto"
+    target_entropy: str | float = "auto"
+    device: str = "cpu"
+
+    output_directory: str = "artifacts/training"
 
 
 @dataclass(frozen=True)
@@ -231,4 +249,20 @@ class ExperimentConfig:
             raise ValueError("rk4_substeps must be at least 1.")
         if self.shield.grid_size < 3:
             raise ValueError("shield.grid_size must be at least 3.")
+        if not 0.0 < self.training.mu_min <= self.training.mu_max:
+            raise ValueError("Training mass bounds must satisfy 0 < mu_min <= mu_max.")
+        if self.training.total_timesteps < 1:
+            raise ValueError("training.total_timesteps must be at least 1.")
+        if self.training.learning_starts < 0:
+            raise ValueError("training.learning_starts cannot be negative.")
+        if self.training.buffer_size < 1 or self.training.batch_size < 1:
+            raise ValueError("SAC buffer_size and batch_size must be at least 1.")
+        if self.training.train_frequency < 1:
+            raise ValueError("training.train_frequency must be at least 1.")
+        if self.training.gradient_steps < 0:
+            raise ValueError("training.gradient_steps cannot be negative.")
+        if not self.training.hidden_sizes or any(
+            size < 1 for size in self.training.hidden_sizes
+        ):
+            raise ValueError("training.hidden_sizes must contain positive sizes.")
 

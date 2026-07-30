@@ -38,22 +38,38 @@ RewardFunction = Callable[[State, float, State], float]
 
 
 def starter_reward(state: State, force: float, next_state: State) -> float:
-    """Return a simple placeholder reward for one sampled transition.
+    """Return a simple reward for one sampled transition.
 
     The current definition is the negative stage cost
 
-        r[k] = -(theta[k+1]^2 + 0.1*x[k+1]^2 + 0.001*u[k]^2),
+        r[k] = -(
+            theta[k+1]^2
+            + 0.1*x[k+1]^2
+            + 0.01*x_dot[k+1]^2
+            + 0.02*theta_dot[k+1]^2
+            + 0.001*u[k]^2
+            + track_failure_cost
+        ),
 
-    where the angle is represented in ``[-pi, pi)``.  The first two terms favor
-    the upright pole and centered cart; the final term penalizes control effort.
-    Larger rewards are therefore better, with zero being the ideal value of this
-    placeholder expression.
+    where the angle is represented in ``[-pi, pi)``. The angle and position
+    terms favor the upright pole and centered cart. The velocity terms favor
+    settling instead of merely passing through the upright state. The force
+    term penalizes control effort.
+
+    A large cost is added when the next state reaches or crosses the track
+    limit. This is especially important if a track violation terminates the
+    episode: without it, an agent receiving only negative rewards could learn
+    that ending an episode early avoids future costs.
+
+    Larger rewards are therefore better, with zero being the ideal value of
+    this expression.
 
     Parameters
     ----------
     state:
-        State ``s[k]`` before applying the control.  It is accepted to preserve
-        the general transition-reward interface but is not used by this formula.
+        State ``s[k]`` before applying the control. It is accepted to preserve
+        the general transition-reward interface but is not used by this
+        formula.
     force:
         Final scalar force ``u[k]`` applied to the plant, after controller-side
         clipping or shield projection.
@@ -63,18 +79,56 @@ def starter_reward(state: State, force: float, next_state: State) -> float:
     Notes
     -----
     This reward is a training objective, not a Lyapunov function and not the
-    project's success criterion.  If it is replaced, the same finalized reward
-    must be used for both residual agents so their comparison remains paired.
+    project's success criterion. If it is replaced or its weights are changed,
+    the same finalized reward must be used for both residual agents so their
+    comparison remains paired.
+
+    The track-failure cost is an empirical training penalty. It does not provide
+    a safety guarantee, certify the shield, or define a region of attraction.
     """
 
-    # This placeholder is a next-state stage cost; ``state`` remains in the
-    # signature so a future shared reward may depend on the full transition.
+    # This is a next-state stage cost; ``state`` remains in the signature so a
+    # future shared reward may depend on the full transition.
     del state
-    angle_cost = wrap_angle(next_state.theta) ** 2
-    position_cost = 0.1 * next_state.x**2
-    effort_cost = 0.001 * force**2
-    return -(angle_cost + position_cost + effort_cost)
 
+    # Wrap the pole angle so equivalent physical angles receive the same cost.
+    # In this project, theta = 0 represents the upright pole.
+    wrapped_angle = wrap_angle(next_state.theta)
+
+    # Favor the upright pole.
+    angle_cost = wrapped_angle**2
+
+    # Favor a centered cart.
+    position_cost = 0.1 * next_state.x**2
+
+    # Penalize velocity so rapid passage through the upright state remains costly,
+    # even when the angle and cart position are temporarily small.
+    cart_velocity_cost = 0.01 * next_state.x_dot**2
+    angular_velocity_cost = 0.02 * next_state.theta_dot**2
+
+    # Penalize the force actually applied to the plant, after residual addition,
+    # clipping, and any shield projection.
+    effort_cost = 0.001 * force**2
+
+    # Penalize a track violation detected at the sampled next state. This terminal
+    # penalty discourages the agent from exploiting early termination to avoid
+    # future negative stage rewards. It does not provide a safety guarantee.
+    track_failure_cost = 0.0
+    if abs(next_state.x) >= 2.4:
+        track_failure_cost = 100.0
+
+    total_cost = (
+        angle_cost
+        + position_cost
+        + cart_velocity_cost
+        + angular_velocity_cost
+        + effort_cost
+        + track_failure_cost
+    )
+
+    # Convert explicitly to a Python float in case State fields use NumPy
+    # scalar types.
+    return -float(total_cost)
 
 def run_rollout(
     controller: Controller,

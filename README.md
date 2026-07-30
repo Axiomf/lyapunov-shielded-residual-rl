@@ -5,8 +5,8 @@ This is a deliberately small project skeleton for:
 > Robustness and Basin Geometry of Lyapunov-Shielded Residual Reinforcement
 > Learning for Cart-Pole Swing-Up
 
-It contains the experiment structure, not a full SAC implementation and not
-the later evaluation/analysis pipeline.
+It contains the experiment structure and a small Stable-Baselines3 SAC
+training adapter. The later evaluation/analysis pipeline is not implemented.
 
 ## What is implemented
 
@@ -19,14 +19,16 @@ the later evaluation/analysis pipeline.
 - Local Lyapunov shield using a simple scalar grid projection.
 - Fixed plant mass during each rollout.
 - Domain-randomized mass sampling between rollouts.
-- A dummy actor so the complete data flow can run now.
+- Stable-Baselines3 SAC training for residual and shielded-residual control.
+- Seeded replay collection and actor/configuration/metrics checkpoints.
+- Dummy actors for controller and simulation smoke tests.
 
 ## What is intentionally left for you
 
 - Replace the small energy-shaping example with the exact law you choose for
   the paper.
-- Implement SAC, replay storage, reward design, logging, and checkpoints.
-- Tune switching, LQR, shield, and reward parameters.
+- Expand the short SAC interface run into a tuned training experiment.
+- Finalize and tune switching, LQR, shield, reward, and SAC parameters.
 - Add evaluation and analysis after training.
 
 ## Project map
@@ -36,7 +38,7 @@ cartpole_starter/
 ├── main.py                 # Small runnable example
 ├── pyproject.toml
 ├── src/cartpole/
-│   ├── actor.py            # Actor interface and dummy actor
+│   ├── actor.py            # Actor interface and dummy actors
 │   ├── config.py           # Static experiment configuration
 │   ├── control_math.py     # Nominal finite differences and LQR
 │   ├── controllers.py      # The three controller types
@@ -44,7 +46,7 @@ cartpole_starter/
 │   ├── plant.py            # Pure dynamics/RK4 functions
 │   ├── shield.py           # Pure shield projection function
 │   ├── simulation.py       # One-rollout orchestrator
-│   └── training.py         # Training boundary and mass sampling
+│   └── training.py         # Stable-Baselines3 SAC adapter and mass sampling
 └── tests/test_smoke.py
 ```
 
@@ -107,6 +109,22 @@ From this directory:
 python -m pip install -e .
 python main.py
 python -m unittest discover -s tests
+```
+
+Run one short residual-SAC interface check:
+
+```python
+from cartpole.config import ExperimentConfig
+from cartpole.controllers import ControllerKind
+from cartpole.training import train_sac
+
+result = train_sac(
+    ControllerKind.RESIDUAL_SAC,
+    ExperimentConfig(),
+    seed=0,
+)
+print(result.metrics)
+print(result.extra["checkpoint_path"])
 ```
 
 ## Important interpretation
