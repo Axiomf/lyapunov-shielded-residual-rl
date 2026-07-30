@@ -27,7 +27,7 @@ from .plant import step_rk4, wrap_angle
 ControllerFactory: TypeAlias = Callable[[], Controller]
 FloatArray: TypeAlias = NDArray[np.float64]
 ComplexArray: TypeAlias = NDArray[np.complex128]
-
+print
 
 @dataclass(frozen=True)
 class SuccessCriteria:

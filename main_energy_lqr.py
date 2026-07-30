@@ -294,7 +294,7 @@ def _write_local_analysis(
             dtype=np.float64,
         ),
     )
-
+print
 
 def _save_shared_initial_states(
     output_directory: Path,
