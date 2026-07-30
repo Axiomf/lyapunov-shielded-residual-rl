@@ -38,19 +38,19 @@ class LQRData:
 
     With state order ``[x, theta, x_dot, theta_dot]`` and one scalar force:
 
-    - ``a`` has shape ``(4, 4)`` and is the nominal state Jacobian.
-    - ``b`` has shape ``(4, 1)`` and is the nominal input Jacobian.
-    - ``k`` has shape ``(1, 4)`` and defines the feedback ``u = -k @ z``.
-    - ``p`` has shape ``(4, 4)`` and defines ``V(z) = z.T @ p @ z``.
+    - ``A`` has shape ``(4, 4)`` and is the nominal state Jacobian.
+    - ``B`` has shape ``(4, 1)`` and is the nominal input Jacobian.
+    - ``K`` has shape ``(1, 4)`` and defines the feedback ``u = -K @ z``.
+    - ``P`` has shape ``(4, 4)`` and defines ``V(z) = z.T @ P @ z``.
 
     The dataclass is frozen so every controller receives the same unchanged
     nominal matrices during a paired experiment.
     """
 
-    a: FloatArray
-    b: FloatArray
-    k: FloatArray
-    p: FloatArray
+    A: FloatArray
+    B: FloatArray
+    K: FloatArray
+    P: FloatArray
 
 
 def one_step_array(
@@ -111,7 +111,7 @@ def finite_difference_discrete_model(
     # theta = 0 is upright, so the origin with zero force is the nominal
     # equilibrium about which the local controller is designed.
     equilibrium = np.zeros(4, dtype=np.float64)
-    a = np.zeros((4, 4), dtype=np.float64)
+    A = np.zeros((4, 4), dtype=np.float64)
 
     # Perturb one state coordinate at a time.  Each derivative becomes one
     # column of the discrete-time state matrix A.
@@ -120,14 +120,14 @@ def finite_difference_discrete_model(
         offset[column] = epsilon
         plus = one_step_array(equilibrium + offset, 0.0, nominal_plant)
         minus = one_step_array(equilibrium - offset, 0.0, nominal_plant)
-        a[:, column] = (plus - minus) / (2.0 * epsilon)
+        A[:, column] = (plus - minus) / (2.0 * epsilon)
 
     # The scalar-input derivative is stored as a column matrix so products
     # such as B.T @ P @ B keep their standard LQR dimensions.
     plus_u = one_step_array(equilibrium, epsilon, nominal_plant)
     minus_u = one_step_array(equilibrium, -epsilon, nominal_plant)
-    b = ((plus_u - minus_u) / (2.0 * epsilon)).reshape(4, 1)
-    return a, b
+    B = ((plus_u - minus_u) / (2.0 * epsilon)).reshape(4, 1)
+    return A, B
 
 
 def build_lqr(nominal_plant: PlantConfig, config: LQRConfig) -> LQRData:
@@ -157,7 +157,7 @@ def build_lqr(nominal_plant: PlantConfig, config: LQRConfig) -> LQRData:
         Immutable matrices ``A``, ``B``, ``K``, and ``P`` in :class:`LQRData`.
     """
 
-    a, b = finite_difference_discrete_model(
+    A, B = finite_difference_discrete_model(
         nominal_plant,
         config.finite_difference_epsilon,
     )
@@ -166,10 +166,10 @@ def build_lqr(nominal_plant: PlantConfig, config: LQRConfig) -> LQRData:
     q = np.diag(np.asarray(config.q_diagonal, dtype=np.float64))
     r = np.array([[config.r]], dtype=np.float64)
 
-    p = solve_discrete_are(a, b, q, r)
+    P = solve_discrete_are(A, B, q, r)
     # Solving a linear system is numerically preferable to forming an inverse.
-    k = np.linalg.solve(r + b.T @ p @ b, b.T @ p @ a)
-    return LQRData(a=a, b=b, k=k, p=p)
+    K = np.linalg.solve(r + B.T @ P @ B, B.T @ P @ A)
+    return LQRData(A=A, B=B, K=K, P=P)
 
 
 def nominal_lqr_force(
@@ -192,6 +192,6 @@ def nominal_lqr_force(
         A scalar force in newtons within ``[-u_max, u_max]``.
     """
 
-    force = float(-(lqr.k @ state.as_array()).item())
+    force = float(-(lqr.K @ state.as_array()).item())
     return float(np.clip(force, -nominal_plant.u_max, nominal_plant.u_max))
 

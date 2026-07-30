@@ -39,7 +39,7 @@ class ShieldResult:
     nominal_delta_v: float
 
 
-def lyapunov_value(state: State, p: np.ndarray) -> float:
+def lyapunov_value(state: State, P: np.ndarray) -> float:
     """Evaluate the nominal quadratic Lyapunov candidate ``V(z) = z.T P z``.
 
     Here ``z = s - s_star`` is the displacement from the upright equilibrium.
@@ -51,7 +51,7 @@ def lyapunov_value(state: State, p: np.ndarray) -> float:
     """
 
     z = state.as_array()
-    return float(z @ p @ z)
+    return float(z @ P @ z)
 
 
 def project_with_lyapunov_shield(
@@ -112,7 +112,7 @@ def project_with_lyapunov_shield(
     proposed_force = float(
         np.clip(proposed_force, -nominal_plant.u_max, nominal_plant.u_max)
     )
-    v_before = lyapunov_value(state, lqr.p)
+    v_before = lyapunov_value(state, lqr.P)
 
     # The shield is intentionally local; outside its ellipsoid it has no authority.
     if v_before > config.rho:
@@ -139,7 +139,7 @@ def project_with_lyapunov_shield(
     for force in candidates:
         # Use the same nominal zero-order-held RK4 map as the controller model.
         next_state = step_rk4(state, float(force), nominal_plant)
-        delta_v = lyapunov_value(next_state, lqr.p) - v_before
+        delta_v = lyapunov_value(next_state, lqr.P) - v_before
         if delta_v <= threshold:
             feasible.append((float(force), float(delta_v)))
 
@@ -161,7 +161,7 @@ def project_with_lyapunov_shield(
     # is feasible. Its nominal Delta V is still recorded for later analysis.
     fallback = nominal_lqr_force(state, lqr, nominal_plant)
     fallback_next = step_rk4(state, fallback, nominal_plant)
-    fallback_delta_v = lyapunov_value(fallback_next, lqr.p) - v_before
+    fallback_delta_v = lyapunov_value(fallback_next, lqr.P) - v_before
     return ShieldResult(
         force=fallback,
         active=True,
