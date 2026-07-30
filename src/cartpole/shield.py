@@ -3,9 +3,11 @@ from dataclasses import dataclass
 import numpy as np
 
 from .config import PlantConfig, ShieldConfig
-from .control_math import LQRData, nominal_lqr_force
 from .data import State
+
 from .plant import step_rk4
+from .control_math import LQRData, nominal_lqr_force
+
 
 
 @dataclass(frozen=True)

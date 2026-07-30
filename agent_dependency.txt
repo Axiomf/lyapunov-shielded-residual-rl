@@ -1,0 +1,30 @@
+flowchart TB
+    main --> simulation
+    main --> controllers
+    main --> actor
+
+    simulation --> controllers
+    simulation --> plant
+
+    controllers --> actor
+    controllers --> control_math
+    controllers --> shield
+    controllers --> plant
+
+    shield --> control_math
+    shield --> plant
+
+    control_math --> plant
+
+    actor --> data
+    plant --> config
+    plant --> data
+
+    training --> controllers
+    training --> plant
+    training -. local import .-> environment
+
+    environment --> training
+    environment --> simulation
+    environment --> controllers
+    environment --> shield

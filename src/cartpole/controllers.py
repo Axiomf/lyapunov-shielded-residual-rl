@@ -35,12 +35,18 @@ from typing import Protocol
 
 import numpy as np
 
-from .actor import Actor
 from .config import ExperimentConfig
-from .control_math import LQRData, build_lqr, nominal_lqr_force
 from .data import ControlDecision, State
 from .plant import normalize_state, wrap_angle
+from .control_math import LQRData, build_lqr, nominal_lqr_force
 from .shield import project_with_lyapunov_shield
+
+from .actor import Actor
+
+
+
+
+
 
 
 class Controller(Protocol):

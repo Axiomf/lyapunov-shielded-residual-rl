@@ -27,9 +27,12 @@ action conventions paired across comparisons.
 from collections.abc import Callable
 
 from .config import ExperimentConfig
-from .controllers import Controller
 from .data import Rollout, State, Transition
+
 from .plant import has_track_violation, step_rk4, wrap_angle
+from .controllers import Controller
+
+
 
 # A reward is evaluated after one plant step as r(s[k], u[k], s[k + 1]).
 # Keeping this callable interface independent of the controller ensures that the

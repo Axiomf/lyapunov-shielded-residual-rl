@@ -205,10 +205,10 @@ class TrainingConfig:
     seeds: tuple[int, ...] = (0, 1, 2)
 
     # Deliberately small defaults for the first end-to-end interface check.
-    total_timesteps: int = 64
-    learning_starts: int = 16
-    buffer_size: int = 10_000
-    batch_size: int = 16
+    total_timesteps: int = 64 #1_000_000
+    learning_starts: int = 16 #10_000
+    buffer_size: int = 10_000 #500_000
+    batch_size: int = 16 #256
     hidden_sizes: tuple[int, ...] = (64, 64)
 
     learning_rate: float = 3e-4

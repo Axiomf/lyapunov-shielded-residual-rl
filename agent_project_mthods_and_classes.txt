@@ -1,0 +1,141 @@
+main.py
+  function: main
+
+src/cartpole/__init__.py
+  object: __all__
+
+src/cartpole/actor.py
+  class: Actor
+    method: act
+  class: ZeroActor
+    method: act
+  class: RandomActor
+    method: __init__
+    method: act
+
+src/cartpole/config.py
+  class: PlantConfig
+    method: with_mass_multiplier
+  class: LQRConfig
+  class: PhysicsControllerConfig
+  class: ResidualConfig
+  class: ShieldConfig
+  class: ObservationConfig
+  class: RolloutConfig
+  class: TrainingConfig
+  class: ExperimentConfig
+    method: __post_init__
+
+src/cartpole/control_math.py
+  class: LQRData
+  function: one_step_array
+  function: finite_difference_discrete_model
+  function: build_lqr
+  function: nominal_lqr_force
+
+src/cartpole/controllers.py
+  class: Controller
+    method: reset
+    method: act
+  class: ControllerKind
+  class: PhysicsController
+    method: __init__
+    method: reset
+    method: _update_mode
+    method: _energy_shaping_force
+    method: act
+  class: ResidualController
+    method: __init__
+    method: reset
+    method: act
+  class: ShieldedResidualController
+    method: __init__
+    method: reset
+    method: act
+  function: build_controller
+
+src/cartpole/data.py
+  object: FloatArray
+  class: State
+    method: as_array
+    method: from_array
+  class: ControlDecision
+  class: Transition
+  class: Rollout
+    method: total_reward
+
+src/cartpole/environment.py
+  object: InitialStateSampler
+  function: downward_initial_state
+  class: ResidualCartPoleEnvironment
+    method: __init__
+    method: mu
+    method: state
+    method: reset
+    method: step
+    method: _clip_actor_action
+
+src/cartpole/plant.py
+  function: wrap_angle
+  function: clip_force
+  function: state_derivative
+  function: step_rk4
+  function: normalize_state
+  function: has_track_violation
+
+src/cartpole/shield.py
+  class: ShieldResult
+  function: lyapunov_value
+  function: project_with_lyapunov_shield
+
+src/cartpole/simulation.py
+  object: RewardFunction
+  function: starter_reward
+  function: run_rollout
+
+src/cartpole/training.py
+  class: TrainingResult
+  class: TrainedSACActor
+    method: __init__
+    method: act
+    method: load
+  class: _ResidualSACEnvironment
+    method: __init__
+    method: reset
+    method: step
+    method: _validated_observation
+    method: _validate_step_info
+  class: _EpisodeMetricsCallback
+    method: __init__
+    method: _on_step
+    method: scalar_metrics
+    method: current_prefix
+  function: sample_rollout_mass
+  function: _seed_everything
+  function: _assert_finite_replay_buffer
+  function: _save_training_artifacts
+  function: train_sac
+
+tests/test_environment.py
+  class: ResidualCartPoleEnvironmentTests
+    method: test_reset_is_seeded_and_observation_contains_only_state
+    method: test_mass_stays_fixed_during_an_episode
+    method: test_step_clips_and_scales_actor_action
+    method: test_shield_filters_the_residual_near_upright
+    method: test_horizon_sets_truncated_not_terminated
+    method: test_invalid_action_shape_is_rejected
+
+tests/test_smoke.py
+  class: StarterSmokeTests
+    method: setUp
+    method: test_upright_is_an_equilibrium_at_zero_force
+    method: test_state_derivative_satisfies_coupled_dynamics
+    method: test_actor_observation_has_one_shared_shape_and_range
+    method: test_all_three_controllers_use_same_decision_type
+    method: test_rollout_keeps_requested_mu
+
+tests/test_training.py
+  class: SACTrainingTests
+    method: test_small_training_run_saves_artifacts_and_returns_actor
+    method: test_small_shielded_training_run_uses_same_interface
+    method: test_physics_controller_is_not_trained

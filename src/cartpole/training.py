@@ -20,11 +20,14 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
-from .actor import Actor
+
 from .config import ExperimentConfig
-from .controllers import ControllerKind
 from .data import State
+
 from .plant import normalize_state
+from .controllers import ControllerKind
+
+from .actor import Actor
 
 
 @dataclass(frozen=True)
